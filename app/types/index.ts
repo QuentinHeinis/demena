@@ -152,7 +152,20 @@ export interface CalendarEvent {
   dateKey: string
   allDay: boolean
   done?: boolean
+  reminderMinutes?: number
   to: string
+}
+
+export interface CalendarCustomEvent {
+  id: string
+  workspace_id: string
+  title: string
+  description: string
+  date: string
+  all_day: boolean
+  reminder_minutes: number
+  created_at: string
+  updated_at: string
 }
 
 export interface Toast {
@@ -167,6 +180,7 @@ export interface BeforeInstallPromptEvent extends Event {
 }
 
 export type TaskInput = Partial<Task> & Pick<Task, 'title'>
+export type CalendarCustomEventInput = Partial<CalendarCustomEvent> & Pick<CalendarCustomEvent, 'title' | 'date'>
 export type TransactionInput = Partial<Transaction> & Pick<Transaction, 'label' | 'amount' | 'type'>
 export type BudgetInput = Partial<Budget> & Pick<Budget, 'category' | 'amount'>
 export type ApartmentInput = Partial<Apartment> & Pick<Apartment, 'title'>

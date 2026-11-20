@@ -1,4 +1,4 @@
-import type { Apartment, CalendarEvent, Task } from '~/types'
+import type { Apartment, CalendarCustomEvent, CalendarEvent, Task } from '~/types'
 import { CALENDAR_KINDS, type CalendarEventKind } from '~/utils/constants'
 import { localDateKey, parseCalendarDate } from '~/utils/format'
 import { buildIcs, downloadIcs } from '~/utils/ics'
@@ -15,13 +15,14 @@ export function useCalendar() {
   const reminders = useReminders()
   const tasks = useCollection<Task>('tasks')
   const apartments = useCollection<Apartment>('apartments')
+  const customEvents = useCollection<CalendarCustomEvent>('calendar_events')
   const toast = useToast()
 
   const todayKey = computed(() => localDateKey(new Date()))
   const selectedKey = ref(todayKey.value)
   const cursor = ref(new Date())
   const kinds = ref<CalendarEventKind[]>(CALENDAR_KINDS.map((kind) => kind.value))
-  const loading = computed(() => workspace.loading.value || tasks.loading.value || apartments.loading.value)
+  const loading = computed(() => workspace.loading.value || tasks.loading.value || apartments.loading.value || customEvents.loading.value)
 
   const events = computed<CalendarEvent[]>(() => {
     const result: CalendarEvent[] = []
@@ -69,6 +70,20 @@ export function useCalendar() {
       })
     }
 
+    for (const event of customEvents.items.value) {
+      result.push({
+        id: `custom-${event.id}`,
+        kind: 'custom',
+        title: event.title,
+        subtitle: event.description || 'Événement personnalisé',
+        date: event.date,
+        dateKey: localDateKey(event.date),
+        allDay: event.all_day,
+        reminderMinutes: event.reminder_minutes,
+        to: '/calendrier'
+      })
+    }
+
     return result.sort((a, b) => a.date.localeCompare(b.date))
   })
 
@@ -111,7 +126,17 @@ export function useCalendar() {
   const monthLabel = computed(() => new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(cursor.value))
 
   async function fetch() {
-    await Promise.all([tasks.fetch(), apartments.fetch()])
+    await Promise.all([tasks.fetch(), apartments.fetch(), customEvents.fetch()])
+  }
+
+  function customEventFor(event: CalendarEvent): CalendarCustomEvent | null {
+    if (event.kind !== 'custom') return null
+    return customEvents.items.value.find((item) => `custom-${item.id}` === event.id) ?? null
+  }
+
+  async function removeCustomEvent(event: CalendarEvent) {
+    const custom = customEventFor(event)
+    if (custom) await customEvents.remove(custom.id)
   }
 
   function moveMonth(delta: number) {
@@ -162,7 +187,10 @@ export function useCalendar() {
     days,
     monthLabel,
     reminders,
+    customEvents,
     fetch,
+    customEventFor,
+    removeCustomEvent,
     moveMonth,
     goToday,
     selectDay,

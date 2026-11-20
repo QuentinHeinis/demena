@@ -37,8 +37,9 @@ pnpm dev
 
 ## Calendrier et rappels
 
-- La page **Calendrier** regroupe automatiquement le jour J (défini dans les paramètres de l’espace), les visites datées des appartements et les échéances des tâches.
-- Dans **Paramètres → Rappels du calendrier**, choisissez le délai : à l’heure, 1 heure, 1 jour, 2 jours ou aucun.
+- La page **Calendrier** regroupe automatiquement le jour J (défini dans les paramètres de l’espace), les visites datées des appartements, les échéances des tâches et les événements libres ajoutés depuis le calendrier.
+- Un événement libre peut être daté ou « toute la journée », avec un rappel propre : pour choisir, aucun, à l’heure, 5 min, 15 min, 1 jour ou 2 jours avant. Sans choix spécifique, il suit le délai global.
+- Dans **Paramètres → Rappels du calendrier**, choisissez le délai global : à l’heure, 1 heure, 1 jour, 2 jours ou aucun.
 - Cliquez sur **Exporter .ics**, envoyez le fichier sur votre téléphone et ouvrez-le avec l’application Calendrier d’Apple ou Google : les rappels sont intégrés à chaque événement.
 - Activez les notifications de l’application Calendrier dans les réglages du téléphone pour recevoir les alertes.
 

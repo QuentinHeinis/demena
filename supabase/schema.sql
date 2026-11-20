@@ -144,6 +144,18 @@ create table if not exists public.contacts (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.calendar_events (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  title text not null,
+  description text not null default '',
+  date text not null,
+  all_day boolean not null default true,
+  reminder_minutes integer not null default -1 check (reminder_minutes in (-2, -1, 0, 5, 15, 60, 1440, 2880)),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists tasks_workspace_id_idx on public.tasks (workspace_id);
 create index if not exists transactions_workspace_id_idx on public.transactions (workspace_id);
 create index if not exists transactions_workspace_id_date_idx on public.transactions (workspace_id, date);
@@ -151,6 +163,7 @@ create index if not exists budgets_workspace_id_idx on public.budgets (workspace
 create index if not exists apartments_workspace_id_idx on public.apartments (workspace_id);
 create index if not exists boxes_workspace_id_idx on public.boxes (workspace_id);
 create index if not exists contacts_workspace_id_idx on public.contacts (workspace_id);
+create index if not exists calendar_events_workspace_id_idx on public.calendar_events (workspace_id);
 create index if not exists workspace_members_user_id_idx on public.workspace_members (user_id);
 create index if not exists workspace_invitations_email_idx on public.workspace_invitations (lower(email));
 
@@ -164,6 +177,8 @@ drop trigger if exists boxes_set_updated_at on public.boxes;
 create trigger boxes_set_updated_at before update on public.boxes for each row execute function public.set_updated_at();
 drop trigger if exists contacts_set_updated_at on public.contacts;
 create trigger contacts_set_updated_at before update on public.contacts for each row execute function public.set_updated_at();
+drop trigger if exists calendar_events_set_updated_at on public.calendar_events;
+create trigger calendar_events_set_updated_at before update on public.calendar_events for each row execute function public.set_updated_at();
 drop trigger if exists workspaces_set_updated_at on public.workspaces;
 create trigger workspaces_set_updated_at before update on public.workspaces for each row execute function public.set_updated_at();
 drop trigger if exists user_settings_set_updated_at on public.user_settings;
@@ -342,6 +357,7 @@ alter table public.budgets enable row level security;
 alter table public.apartments enable row level security;
 alter table public.boxes enable row level security;
 alter table public.contacts enable row level security;
+alter table public.calendar_events enable row level security;
 
 drop policy if exists "profiles_select" on public.profiles;
 create policy "profiles_select" on public.profiles for select using (
@@ -388,7 +404,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['tasks', 'transactions', 'budgets', 'apartments', 'boxes', 'contacts'] loop
+  foreach t in array array['tasks', 'transactions', 'budgets', 'apartments', 'boxes', 'contacts', 'calendar_events'] loop
     execute format('drop policy if exists %I on public.%I', 'data_select_' || t, t);
     execute format('create policy %I on public.%I for select using (public.is_workspace_member(workspace_id))', 'data_select_' || t, t);
     execute format('drop policy if exists %I on public.%I', 'data_insert_' || t, t);

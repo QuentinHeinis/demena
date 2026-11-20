@@ -5,12 +5,14 @@ import type { Task } from '~/types'
 import PageHeader from '~/components/PageHeader.vue'
 import UiCard from '~/components/ui/Card.vue'
 import UiInput from '~/components/ui/Input.vue'
+import UiSelect from '~/components/ui/Select.vue'
 import UiButton from '~/components/ui/Button.vue'
 import UiEmptyState from '~/components/ui/EmptyState.vue'
 import UiConfirmModal from '~/components/ui/ConfirmModal.vue'
 import TaskCard from '~/components/TaskCard.vue'
 import TaskFormModal from '~/components/TaskFormModal.vue'
 import { cn } from '~/utils/cn'
+import { TASK_PRIORITIES, TASK_SORT_OPTIONS, TASK_SORT_ORDER_OPTIONS } from '~/utils/constants'
 import { useTasks } from '~/composables/useTasks'
 import { useWorkspace } from '~/composables/useWorkspace'
 
@@ -19,19 +21,37 @@ const workspace = useWorkspace()
 
 const filter = ref<'all' | 'pending' | 'done'>('all')
 const search = ref('')
+const sortBy = ref('due')
+const sortOrder = ref('asc')
 const modalOpen = ref(false)
 const editing = ref<Task | null>(null)
 const toDelete = ref<Task | null>(null)
 
 onMounted(() => tasks.fetch())
 
+function compareTasks(a: Task, b: Task): number {
+  if (Boolean(a.due_date) !== Boolean(b.due_date)) return a.due_date ? -1 : 1
+
+  let result = 0
+  if (sortBy.value === 'due') result = (a.due_date ?? '').localeCompare(b.due_date ?? '')
+  else if (sortBy.value === 'priority') {
+    result = TASK_PRIORITIES.findIndex((item) => item.value === a.priority) - TASK_PRIORITIES.findIndex((item) => item.value === b.priority)
+  } else if (sortBy.value === 'status') result = Number(a.done) - Number(b.done)
+  else if (sortBy.value === 'title') result = a.title.localeCompare(b.title, 'fr')
+  else if (sortBy.value === 'created') result = a.created_at.localeCompare(b.created_at)
+
+  return result * (sortOrder.value === 'desc' ? -1 : 1)
+}
+
 const visible = computed(() => {
   const term = search.value.trim().toLowerCase()
-  return tasks.items.value.filter((task) => {
-    if (filter.value === 'pending' && task.done) return false
-    if (filter.value === 'done' && !task.done) return false
-    return !term || task.title.toLowerCase().includes(term) || task.description.toLowerCase().includes(term)
-  })
+  return tasks.items.value
+    .filter((task) => {
+      if (filter.value === 'pending' && task.done) return false
+      if (filter.value === 'done' && !task.done) return false
+      return !term || task.title.toLowerCase().includes(term) || task.description.toLowerCase().includes(term)
+    })
+    .sort(compareTasks)
 })
 
 const filters = [
@@ -65,21 +85,29 @@ async function confirmDelete() {
       </template>
     </PageHeader>
 
-    <div class="mb-5 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-      <UiInput v-model="search" placeholder="Rechercher une tâche…" :icon="Search" />
-      <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
-        <button
-          v-for="item in filters"
-          :key="item.value"
-          type="button"
-          :class="cn(
-            'rounded-lg px-3 py-1.5 text-xs font-semibold transition',
-            filter === item.value ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-          )"
-          @click="filter = item.value"
-        >
-          {{ item.label }}
-        </button>
+    <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end">
+      <UiInput v-model="search" placeholder="Rechercher une tâche…" :icon="Search" class="lg:flex-1" />
+      <div class="flex flex-wrap items-end gap-2">
+        <div class="w-full sm:w-40">
+          <UiSelect v-model="sortBy" label="Trier par" :options="TASK_SORT_OPTIONS" />
+        </div>
+        <div class="w-full sm:w-36">
+          <UiSelect v-model="sortOrder" label="Ordre" :options="TASK_SORT_ORDER_OPTIONS" />
+        </div>
+        <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
+          <button
+            v-for="item in filters"
+            :key="item.value"
+            type="button"
+            :class="cn(
+              'rounded-lg px-3 py-1.5 text-xs font-semibold transition',
+              filter === item.value ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            )"
+            @click="filter = item.value"
+          >
+            {{ item.label }}
+          </button>
+        </div>
       </div>
     </div>
 

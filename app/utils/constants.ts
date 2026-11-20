@@ -13,6 +13,19 @@ export const TASK_PRIORITIES = [
   { value: 'haute', label: 'Haute', hex: '#f43f5e', class: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/20' }
 ] as const
 
+export const TASK_SORT_OPTIONS = [
+  { value: 'due', label: 'Échéance' },
+  { value: 'priority', label: 'Priorité' },
+  { value: 'status', label: 'Statut' },
+  { value: 'title', label: 'Titre' },
+  { value: 'created', label: 'Ajout récent' }
+] as const
+
+export const TASK_SORT_ORDER_OPTIONS = [
+  { value: 'asc', label: 'Croissant' },
+  { value: 'desc', label: 'Décroissant' }
+] as const
+
 export const TRANSACTION_TYPES = [
   { value: 'depense', label: 'Dépense', hex: '#f43f5e' },
   { value: 'recette', label: 'Recette', hex: '#10b981' }
@@ -61,7 +74,8 @@ export const PUSH_REMINDER_OPTIONS = [
 export const CALENDAR_KINDS = [
   { value: 'move', label: 'Jour J', hex: '#8b5cf6', class: 'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/20' },
   { value: 'visit', label: 'Visites', hex: '#0ea5e9', class: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/20' },
-  { value: 'task', label: 'Échéances', hex: '#f59e0b', class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20' }
+  { value: 'task', label: 'Échéances', hex: '#f59e0b', class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20' },
+  { value: 'custom', label: 'Libres', hex: '#14b8a6', class: 'bg-teal-50 text-teal-700 ring-teal-600/20 dark:bg-teal-500/10 dark:text-teal-300 dark:ring-teal-400/20' }
 ] as const
 
 export const REMINDER_OPTIONS = [
@@ -70,6 +84,17 @@ export const REMINDER_OPTIONS = [
   { value: '1440', label: '1 jour avant' },
   { value: '2880', label: '2 jours avant' },
   { value: 'none', label: 'Aucun rappel' }
+] as const
+
+export const EVENT_REMINDER_OPTIONS = [
+  { value: '-1', label: 'Rappel des paramètres' },
+  { value: '-2', label: 'Aucun rappel' },
+  { value: '0', label: 'À l’heure' },
+  { value: '5', label: '5 minutes avant' },
+  { value: '15', label: '15 minutes avant' },
+  { value: '60', label: '1 heure avant' },
+  { value: '1440', label: '1 jour avant' },
+  { value: '2880', label: '2 jours avant' }
 ] as const
 
 export const BOX_ROOMS = [
@@ -102,6 +127,8 @@ export const INVITE_ROLES = [
 
 export type TaskCategory = (typeof TASK_CATEGORIES)[number]['value']
 export type TaskPriority = (typeof TASK_PRIORITIES)[number]['value']
+export type TaskSort = (typeof TASK_SORT_OPTIONS)[number]['value']
+export type TaskSortOrder = (typeof TASK_SORT_ORDER_OPTIONS)[number]['value']
 export type TransactionType = (typeof TRANSACTION_TYPES)[number]['value']
 export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number]['value']
 export type ApartmentKind = (typeof APARTMENT_KINDS)[number]['value']

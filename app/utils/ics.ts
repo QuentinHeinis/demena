@@ -48,6 +48,8 @@ function eventLines(event: CalendarEvent, reminder: number | null, now: Date): s
   else end.setHours(start.getHours() + 1)
 
   const description = [event.subtitle, event.done ? 'Terminée' : ''].filter(Boolean).join(' — ')
+  const override = event.reminderMinutes
+  const effective = override === undefined || override === -1 ? reminder : override === -2 ? null : override
 
   return [
     'BEGIN:VEVENT',
@@ -58,11 +60,11 @@ function eventLines(event: CalendarEvent, reminder: number | null, now: Date): s
     `SUMMARY:${escapeText(event.title)}`,
     `DESCRIPTION:${escapeText(description)}`,
     'STATUS:CONFIRMED',
-    ...(reminder === null ? [] : [
+    ...(effective === null ? [] : [
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${escapeText(event.title)}`,
-      `TRIGGER:${triggerValue(reminder)}`,
+      `TRIGGER:${triggerValue(effective)}`,
       'END:VALARM'
     ]),
     'END:VEVENT'

@@ -48,6 +48,7 @@ interface EventRow {
   body: string
   startsAt: number
   url: string
+  reminderMinutes?: number
 }
 
 async function sendOne(subscription: SubscriptionRow, payload: { title: string, body: string, url: string, tag?: string }): Promise<boolean> {
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
   const { data: workspaces } = await supabase.from('workspaces').select('id, name, move_date, destination')
   const { data: apartments } = await supabase.from('apartments').select('id, workspace_id, title, visit_date, address, city')
   const { data: tasks } = await supabase.from('tasks').select('id, workspace_id, title, due_date, done')
+  const { data: calendarEvents } = await supabase.from('calendar_events').select('id, workspace_id, title, description, date, reminder_minutes')
   const { data: memberships } = await supabase.from('workspace_members').select('user_id, workspace_id')
 
   const eventsByWorkspace = new Map<string, EventRow[]>()
@@ -146,6 +148,17 @@ Deno.serve(async (req) => {
     })
   }
 
+  for (const event of calendarEvents ?? []) {
+    add(event.workspace_id, {
+      key: `custom:${event.id}:${event.date}`,
+      title: event.title,
+      body: event.description || 'Événement personnalisé',
+      startsAt: parseDate(event.date),
+      url: '/calendrier',
+      reminderMinutes: event.reminder_minutes
+    })
+  }
+
   let sent = 0
   let failed = 0
 
@@ -153,16 +166,19 @@ Deno.serve(async (req) => {
     const workspaceIds = new Set(
       (memberships ?? []).filter((membership) => membership.user_id === subscription.user_id).map((membership) => membership.workspace_id)
     )
-    const reminderMs = subscription.reminder_minutes * 60_000
     const now = Date.now()
 
     for (const workspaceId of workspaceIds) {
       for (const event of eventsByWorkspace.get(workspaceId) ?? []) {
-        const notifyAt = event.startsAt - reminderMs
+        const rawReminder = event.reminderMinutes ?? -1
+        const reminderMinutes = rawReminder === -1 ? subscription.reminder_minutes : rawReminder
+        if (reminderMinutes < 0) continue
+
+        const notifyAt = event.startsAt - reminderMinutes * 60_000
         const age = now - notifyAt
         if (age < 0 || age > 12 * 60 * 60_000) continue
 
-        const eventKey = `${event.key}:${subscription.reminder_minutes}`
+        const eventKey = `${event.key}:${reminderMinutes}`
         const { data: alreadySent } = await supabase
           .from('push_notifications_sent')
           .select('id')

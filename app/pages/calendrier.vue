@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { BellRing, CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Download, MapPin } from '@lucide/vue'
+import { BellRing, CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Download, MapPin, Pencil, Plus, Trash2 } from '@lucide/vue'
+import type { CalendarCustomEvent, CalendarEvent } from '~/types'
 import PageHeader from '~/components/PageHeader.vue'
 import UiButton from '~/components/ui/Button.vue'
 import UiCard from '~/components/ui/Card.vue'
 import UiEmptyState from '~/components/ui/EmptyState.vue'
-import { CALENDAR_KINDS, metaOf } from '~/utils/constants'
+import UiConfirmModal from '~/components/ui/ConfirmModal.vue'
+import CalendarEventFormModal from '~/components/CalendarEventFormModal.vue'
+import { CALENDAR_KINDS, EVENT_REMINDER_OPTIONS, labelOf, metaOf } from '~/utils/constants'
 import { cn } from '~/utils/cn'
 import { formatCalendarTime, parseCalendarDate } from '~/utils/format'
 import { useCalendar } from '~/composables/useCalendar'
+import { useWorkspace } from '~/composables/useWorkspace'
 
 const calendar = useCalendar()
+const workspace = useWorkspace()
 const weekdays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+
+const modalOpen = ref(false)
+const editing = ref<CalendarCustomEvent | null>(null)
+const toDelete = ref<CalendarEvent | null>(null)
 
 const selectedDateLabel = computed(() => {
   const date = parseCalendarDate(calendar.selectedKey.value)
@@ -18,14 +27,31 @@ const selectedDateLabel = computed(() => {
   return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date)
 })
 
+function openCreate() {
+  editing.value = null
+  modalOpen.value = true
+}
+
+function openEdit(event: CalendarEvent) {
+  editing.value = calendar.customEventFor(event)
+  modalOpen.value = true
+}
+
+async function confirmDelete() {
+  if (!toDelete.value) return
+  await calendar.removeCustomEvent(toDelete.value)
+  toDelete.value = null
+}
+
 onMounted(() => calendar.fetch())
 </script>
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="Calendrier" subtitle="Visites, échéances et jour J au même endroit.">
+    <PageHeader title="Calendrier" subtitle="Visites, échéances, rendez-vous libres et jour J au même endroit.">
       <template #actions>
         <UiButton variant="outline" size="sm" @click="calendar.goToday()"><CalendarDays class="size-4" />Aujourd’hui</UiButton>
+        <UiButton v-if="workspace.canWrite.value" size="sm" @click="openCreate()"><Plus class="size-4" />Nouvel événement</UiButton>
         <UiButton size="sm" :loading="calendar.loading.value" @click="calendar.exportAll()"><Download class="size-4" />Exporter .ics</UiButton>
       </template>
     </PageHeader>
@@ -39,7 +65,7 @@ onMounted(() => calendar.fetch())
           <div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-white">Recevoir des rappels sur votre téléphone</h2>
             <p class="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-              Exportez le calendrier, envoyez le fichier sur votre mobile et ouvrez-le avec l’application Calendrier d’Apple ou Google. Les rappels choisis dans les paramètres sont inclus dans chaque événement.
+              Exportez le calendrier, envoyez le fichier sur votre mobile et ouvrez-le avec l’application Calendrier d’Apple ou Google. Les rappels choisis dans les paramètres s’appliquent à tous les événements, sauf ceux où vous définissez un rappel personnalisé.
             </p>
           </div>
         </div>
@@ -116,20 +142,25 @@ onMounted(() => calendar.fetch())
     </UiCard>
 
     <UiCard>
-      <div class="mb-4 flex items-center justify-between gap-3">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-sm font-bold capitalize text-slate-900 dark:text-white">{{ selectedDateLabel }}</h2>
           <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ calendar.selectedEvents.value.length }} événement(s)</p>
         </div>
-        <UiButton variant="outline" size="sm" @click="calendar.exportAll()"><Download class="size-4" />Tout exporter</UiButton>
+        <div class="flex flex-wrap gap-2">
+          <UiButton v-if="workspace.canWrite.value" variant="outline" size="sm" @click="openCreate()"><Plus class="size-4" />Ajouter ici</UiButton>
+          <UiButton variant="outline" size="sm" @click="calendar.exportAll()"><Download class="size-4" />Tout exporter</UiButton>
+        </div>
       </div>
 
       <UiEmptyState
         v-if="!calendar.selectedEvents.value.length"
         :icon="CalendarDays"
         title="Aucun événement ce jour"
-        description="Ajoutez une date de visite à un appartement, une échéance à une tâche ou définissez la date du déménagement dans les paramètres."
-      />
+        description="Ajoutez un événement libre, une visite, une échéance ou la date du déménagement."
+      >
+        <UiButton v-if="workspace.canWrite.value" size="sm" @click="openCreate()"><Plus class="size-4" />Ajouter un événement</UiButton>
+      </UiEmptyState>
 
       <div v-else class="space-y-2">
         <div
@@ -143,13 +174,36 @@ onMounted(() => calendar.fetch())
           <span class="size-2.5 shrink-0 rounded-full" :style="{ backgroundColor: metaOf(CALENDAR_KINDS, event.kind)?.hex }" />
           <div class="min-w-0 flex-1">
             <p :class="cn('truncate text-sm font-semibold text-slate-800 dark:text-slate-100', event.done && 'line-through')">{{ event.title }}</p>
-            <p class="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400"><MapPin class="size-3" />{{ event.subtitle }}</p>
+            <p class="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+              <component :is="event.kind === 'custom' ? CalendarDays : MapPin" class="size-3" />{{ event.subtitle }}
+            </p>
           </div>
+          <span v-if="event.kind === 'custom'" class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            {{ labelOf(EVENT_REMINDER_OPTIONS, String(event.reminderMinutes ?? -1)) }}
+          </span>
           <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ formatCalendarTime(event.date) }}</span>
           <UiButton variant="outline" size="sm" @click="calendar.exportOne(event)"><CalendarPlus class="size-4" />Ajouter</UiButton>
-          <NuxtLink :to="event.to" class="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400">Ouvrir</NuxtLink>
+          <template v-if="event.kind === 'custom' && workspace.canWrite.value">
+            <UiButton variant="outline" size="sm" @click="openEdit(event)"><Pencil class="size-4" />Modifier</UiButton>
+            <UiButton variant="danger" size="sm" @click="toDelete = event"><Trash2 class="size-4" />Supprimer</UiButton>
+          </template>
+          <NuxtLink v-else :to="event.to" class="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400">Ouvrir</NuxtLink>
         </div>
       </div>
     </UiCard>
+
+    <CalendarEventFormModal
+      :open="modalOpen"
+      :event="editing"
+      :date="calendar.selectedKey.value"
+      @close="modalOpen = false"
+    />
+    <UiConfirmModal
+      :open="Boolean(toDelete)"
+      title="Supprimer l’événement ?"
+      :message="`« ${toDelete?.title ?? ''} » sera définitivement supprimé.`"
+      @cancel="toDelete = null"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
