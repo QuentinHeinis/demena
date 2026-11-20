@@ -51,6 +51,13 @@ export const BOX_STATUSES = [
   { value: 'devide', label: 'Dévidé', hex: '#10b981', class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20' }
 ] as const
 
+export const PUSH_REMINDER_OPTIONS = [
+  { value: '0', label: 'À l’heure' },
+  { value: '60', label: '1 heure avant' },
+  { value: '1440', label: '1 jour avant' },
+  { value: '2880', label: '2 jours avant' }
+] as const
+
 export const CALENDAR_KINDS = [
   { value: 'move', label: 'Jour J', hex: '#8b5cf6', class: 'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/20' },
   { value: 'visit', label: 'Visites', hex: '#0ea5e9', class: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/20' },

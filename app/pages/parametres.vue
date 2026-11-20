@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { BellRing, Building2, LogOut, Plus, UserRound } from '@lucide/vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { BellRing, Building2, LogOut, Plus, Smartphone, UserRound } from '@lucide/vue'
 import PageHeader from '~/components/PageHeader.vue'
 import UiCard from '~/components/ui/Card.vue'
 import UiInput from '~/components/ui/Input.vue'
 import UiButton from '~/components/ui/Button.vue'
 import UiBadge from '~/components/ui/Badge.vue'
 import UiSelect from '~/components/ui/Select.vue'
-import { REMINDER_OPTIONS, WORKSPACE_ROLES, metaOf } from '~/utils/constants'
+import { PUSH_REMINDER_OPTIONS, REMINDER_OPTIONS, WORKSPACE_ROLES, metaOf } from '~/utils/constants'
 import { toDateInputValue } from '~/utils/format'
 import { useSettings } from '~/composables/useSettings'
 import { useWorkspace } from '~/composables/useWorkspace'
 import { useAuth } from '~/composables/useAuth'
 import { useReminders } from '~/composables/useReminders'
+import { usePush } from '~/composables/usePush'
 
 const settings = useSettings()
 const workspace = useWorkspace()
 const auth = useAuth()
 const reminders = useReminders()
+const push = usePush()
 
 const savingProfile = ref(false)
 const savingWorkspace = ref(false)
@@ -32,11 +34,19 @@ const reminderValue = computed({
   set: (value: string) => reminders.set(value === 'none' ? null : Number(value))
 })
 
+const pushReminderValue = computed({
+  get: () => String(reminders.pushMinutes.value),
+  set: (value: string) => reminders.setPush(Number(value))
+})
+
+watch(() => reminders.pushMinutes.value, (value) => push.updateReminder(value))
+
 onMounted(async () => {
   await Promise.all([settings.fetch(), workspace.fetch()])
   profileForm.display_name = settings.settings.value?.display_name ?? ''
   profileForm.phone = settings.settings.value?.phone ?? ''
   syncWorkspaceForm()
+  push.refresh()
 })
 
 function syncWorkspaceForm() {
@@ -145,6 +155,43 @@ async function createSpace() {
         </div>
         <div class="sm:w-56">
           <UiSelect v-model="reminderValue" label="Me rappeler" :options="REMINDER_OPTIONS" />
+        </div>
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <Smartphone class="size-[18px]" />
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Notifications push</h2>
+              <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" :class="push.subscribed.value ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'">
+                {{ push.subscribed.value ? 'Activées' : 'Désactivées' }}
+              </span>
+            </div>
+            <p class="mt-1 max-w-xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              Installez le site sur votre téléphone depuis le navigateur (Ajouter à l’écran d’accueil), puis activez les notifications : les alertes arrivent directement sur l’appareil, même quand le site est fermé.
+            </p>
+            <p v-if="!push.configured.value" class="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+              Ajoutez NUXT_PUBLIC_VAPID_PUBLIC_KEY dans .env et déployez la Edge Function avec ses secrets VAPID.
+            </p>
+            <p v-else-if="!push.supported.value" class="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+              Ce navigateur ne prend pas en charge les notifications push.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3 sm:w-64">
+          <UiSelect v-model="pushReminderValue" label="Rappel push" :options="PUSH_REMINDER_OPTIONS" />
+          <div class="flex flex-wrap gap-2">
+            <UiButton v-if="!push.subscribed.value" size="sm" :loading="push.loading.value" :disabled="!push.configured.value || !push.supported.value" @click="push.enable()">Activer</UiButton>
+            <template v-else>
+              <UiButton variant="outline" size="sm" :loading="push.loading.value" @click="push.test()">Tester</UiButton>
+              <UiButton variant="danger" size="sm" :loading="push.loading.value" @click="push.disable()">Désactiver</UiButton>
+            </template>
+          </div>
         </div>
       </div>
     </UiCard>

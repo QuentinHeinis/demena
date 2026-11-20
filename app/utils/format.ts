@@ -32,12 +32,11 @@ export function toDateInputValue(value: string | Date | null | undefined): strin
 }
 
 export function daysUntil(value: string | Date | null | undefined): number | null {
-  if (!value) return null
-  const target = new Date(value)
-  if (Number.isNaN(target.getTime())) return null
+  const parsed = parseCalendarDate(value)
+  if (!parsed) return null
+  const target = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  target.setHours(0, 0, 0, 0)
   return Math.round((target.getTime() - today.getTime()) / 86_400_000)
 }
 

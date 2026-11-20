@@ -18,7 +18,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
-      supabasePublishableKey: process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      supabasePublishableKey: process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || ''
     }
   },
 
@@ -28,6 +29,11 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'Tâches, budget, appartements et inventaire : tout votre déménagement au même endroit.' },
         { name: 'theme-color', content: '#4f46e5' }
+      ],
+      link: [
+        { rel: 'manifest', href: '/manifest.webmanifest' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' }
       ]
     }
   }
