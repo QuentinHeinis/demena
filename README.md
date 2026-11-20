@@ -1,75 +1,45 @@
-# Nuxt Minimal Starter
+# Déména
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Application de suivi de déménagement (tâches, budget, appartements, cartons, contacts) avec espaces partagés et droits d’accès, basée sur Nuxt 4, Tailwind CSS v4 et Supabase.
 
-## Setup
-
-Make sure to install dependencies:
+## Installation
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+cp .env.example .env
 ```
 
-## Development Server
+Renseignez dans `.env` :
 
-Start the development server on `http://localhost:3000`:
+- `NUXT_PUBLIC_SUPABASE_URL` : URL du projet Supabase.
+- `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` : clé publique `sb_publishable_...` (Settings → API Keys). La clé secrète `sb_secret_...` ne doit **jamais** être utilisée ici : l’application tourne entièrement côté navigateur et s’appuie sur RLS.
+
+## Base de données
+
+1. Créez un projet Supabase.
+2. Collez et exécutez `supabase/schema.sql` dans le SQL Editor.
+3. Le script crée les tables, les politiques RLS, le déclencheur de création d’espace à l’inscription et les fonctions d’invitation.
+4. Activez la confirmation d’email si vous le souhaitez dans Authentication → Providers.
+
+## Lancer le projet
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
 pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+## Espaces et droits
 
-Build the application for production:
+- Chaque utilisateur reçoit un espace personnel à l’inscription.
+- Le **propriétaire** peut inviter des personnes, choisir leur rôle et le modifier ensuite.
+- L’**éditeur** peut créer, modifier et supprimer tout le contenu.
+- Le **lecteur** peut uniquement consulter.
+- Les invitations génèrent un lien à partager : `Settings → API Keys` n’a pas besoin de clé serveur, l’acceptation passe par une fonction RPC sécurisée (`accept_workspace_invitation`) qui vérifie l’email du compte connecté.
+
+## Commandes
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+pnpm dev       # serveur de développement
+pnpm build     # build de production
+pnpm preview   # prévisualisation
+pnpm typecheck # vérification TypeScript
 ```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
