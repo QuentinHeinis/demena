@@ -125,8 +125,19 @@ export function usePush() {
   async function test() {
     loading.value = true
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        toast.error('Connectez-vous pour tester les notifications.')
+        return
+      }
+
       const { data, error } = await supabase.functions.invoke<{ ok?: boolean, error?: string }>('send-due-notifications', {
-        body: { test: true }
+        body: { test: true },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: config.supabasePublishableKey
+        }
       })
 
       if (!error && data?.ok) {
