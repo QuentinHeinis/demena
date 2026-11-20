@@ -35,6 +35,13 @@ pnpm dev
 - Le **lecteur** peut uniquement consulter.
 - Les invitations génèrent un lien à partager : `Settings → API Keys` n’a pas besoin de clé serveur, l’acceptation passe par une fonction RPC sécurisée (`accept_workspace_invitation`) qui vérifie l’email du compte connecté.
 
+## Calendrier et rappels
+
+- La page **Calendrier** regroupe automatiquement le jour J (défini dans les paramètres de l’espace), les visites datées des appartements et les échéances des tâches.
+- Dans **Paramètres → Rappels du calendrier**, choisissez le délai : à l’heure, 1 heure, 1 jour, 2 jours ou aucun.
+- Cliquez sur **Exporter .ics**, envoyez le fichier sur votre téléphone et ouvrez-le avec l’application Calendrier d’Apple ou Google : les rappels sont intégrés à chaque événement.
+- Activez les notifications de l’application Calendrier dans les réglages du téléphone pour recevoir les alertes.
+
 ## Commandes
 
 ```bash

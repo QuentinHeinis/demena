@@ -55,6 +55,34 @@ export function isOverdue(value: string | Date | null | undefined): boolean {
   return days !== null && days < 0
 }
 
+function pad(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+export function parseCalendarDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const parts = value.split('-').map(Number)
+    const [year, month, day] = parts as [number, number, number]
+    return new Date(year, month - 1, day)
+  }
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+export function localDateKey(value: string | Date | null | undefined): string {
+  const date = parseCalendarDate(value)
+  if (!date) return ''
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export function formatCalendarTime(value: string | Date | null | undefined): string {
+  const date = parseCalendarDate(value)
+  if (!date) return ''
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Toute la journée'
+  return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date)
+}
+
 export function initials(name: string | null | undefined): string {
   if (!name?.trim()) return '?'
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')

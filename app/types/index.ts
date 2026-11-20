@@ -2,6 +2,7 @@ import type {
   ApartmentKind,
   ApartmentStatus,
   BoxStatus,
+  CalendarEventKind,
   ContactRole,
   TaskCategory,
   TaskPriority,
@@ -140,6 +141,18 @@ export interface Contact {
   notes: string
   created_at: string
   updated_at: string
+}
+
+export interface CalendarEvent {
+  id: string
+  kind: CalendarEventKind
+  title: string
+  subtitle: string
+  date: string
+  dateKey: string
+  allDay: boolean
+  done?: boolean
+  to: string
 }
 
 export interface Toast {

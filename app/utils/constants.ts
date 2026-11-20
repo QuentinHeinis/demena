@@ -51,6 +51,20 @@ export const BOX_STATUSES = [
   { value: 'devide', label: 'Dévidé', hex: '#10b981', class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20' }
 ] as const
 
+export const CALENDAR_KINDS = [
+  { value: 'move', label: 'Jour J', hex: '#8b5cf6', class: 'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/20' },
+  { value: 'visit', label: 'Visites', hex: '#0ea5e9', class: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/20' },
+  { value: 'task', label: 'Échéances', hex: '#f59e0b', class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20' }
+] as const
+
+export const REMINDER_OPTIONS = [
+  { value: '0', label: 'À l’heure' },
+  { value: '60', label: '1 heure avant' },
+  { value: '1440', label: '1 jour avant' },
+  { value: '2880', label: '2 jours avant' },
+  { value: 'none', label: 'Aucun rappel' }
+] as const
+
 export const BOX_ROOMS = [
   { value: 'cuisine', label: 'Cuisine' },
   { value: 'salon', label: 'Salon' },
@@ -85,6 +99,7 @@ export type TransactionType = (typeof TRANSACTION_TYPES)[number]['value']
 export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number]['value']
 export type ApartmentKind = (typeof APARTMENT_KINDS)[number]['value']
 export type ApartmentStatus = (typeof APARTMENT_STATUSES)[number]['value']
+export type CalendarEventKind = (typeof CALENDAR_KINDS)[number]['value']
 export type BoxStatus = (typeof BOX_STATUSES)[number]['value']
 export type ContactRole = (typeof CONTACT_ROLES)[number]['value']
 

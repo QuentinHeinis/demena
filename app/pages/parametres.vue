@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import { Building2, LogOut, Plus, UserRound } from '@lucide/vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { BellRing, Building2, LogOut, Plus, UserRound } from '@lucide/vue'
 import PageHeader from '~/components/PageHeader.vue'
 import UiCard from '~/components/ui/Card.vue'
 import UiInput from '~/components/ui/Input.vue'
 import UiButton from '~/components/ui/Button.vue'
 import UiBadge from '~/components/ui/Badge.vue'
-import { WORKSPACE_ROLES, metaOf } from '~/utils/constants'
+import UiSelect from '~/components/ui/Select.vue'
+import { REMINDER_OPTIONS, WORKSPACE_ROLES, metaOf } from '~/utils/constants'
 import { toDateInputValue } from '~/utils/format'
 import { useSettings } from '~/composables/useSettings'
 import { useWorkspace } from '~/composables/useWorkspace'
 import { useAuth } from '~/composables/useAuth'
+import { useReminders } from '~/composables/useReminders'
 
 const settings = useSettings()
 const workspace = useWorkspace()
 const auth = useAuth()
+const reminders = useReminders()
 
 const savingProfile = ref(false)
 const savingWorkspace = ref(false)
@@ -23,6 +26,11 @@ const newSpaceName = ref('')
 
 const profileForm = reactive({ display_name: '', phone: '' })
 const workspaceForm = reactive({ name: '', move_date: '', destination: '' })
+
+const reminderValue = computed({
+  get: () => reminders.minutes.value === null ? 'none' : String(reminders.minutes.value),
+  set: (value: string) => reminders.set(value === 'none' ? null : Number(value))
+})
 
 onMounted(async () => {
   await Promise.all([settings.fetch(), workspace.fetch()])
@@ -121,6 +129,25 @@ async function createSpace() {
         </p>
       </UiCard>
     </div>
+
+    <UiCard>
+      <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+            <BellRing class="size-[18px]" />
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Rappels du calendrier</h2>
+            <p class="mt-1 max-w-xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              Ce délai est ajouté aux événements exportés depuis le calendrier. Ouvrez le fichier .ics sur votre téléphone pour recevoir les notifications avec l’application Calendrier.
+            </p>
+          </div>
+        </div>
+        <div class="sm:w-56">
+          <UiSelect v-model="reminderValue" label="Me rappeler" :options="REMINDER_OPTIONS" />
+        </div>
+      </div>
+    </UiCard>
 
     <UiCard>
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">

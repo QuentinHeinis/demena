@@ -1,7 +1,11 @@
 <script setup lang="ts">
 const theme = useTheme()
+const reminders = useReminders()
 
-onMounted(() => theme.init())
+onMounted(() => {
+  theme.init()
+  reminders.init()
+})
 </script>
 
 <template>
