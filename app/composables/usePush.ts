@@ -21,6 +21,31 @@ export function usePush() {
 
   const configured = computed(() => Boolean(config.vapidPublicKey))
 
+  type SaveResult = { ok: true } | { ok: false, message: string }
+
+  async function saveSubscription(subscription: PushSubscription): Promise<SaveResult> {
+    const json = subscription.toJSON()
+    const keys = json.keys
+    if (!json.endpoint || !keys?.p256dh || !keys?.auth) {
+      return { ok: false, message: 'Abonnement push incomplet.' }
+    }
+    if (!auth.user.value) {
+      return { ok: false, message: 'Connectez-vous pour activer les notifications.' }
+    }
+
+    const { error } = await supabase.from('push_subscriptions').upsert({
+      user_id: auth.user.value.id,
+      endpoint: json.endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+      reminder_minutes: reminders.pushMinutes.value,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      device: navigator.userAgent.slice(0, 200)
+    }, { onConflict: 'user_id,endpoint' })
+
+    return error ? { ok: false, message: error.message } : { ok: true }
+  }
+
   async function registration(): Promise<ServiceWorkerRegistration | null> {
     if (!import.meta.client || !('serviceWorker' in navigator)) return null
     try {
@@ -36,8 +61,21 @@ export function usePush() {
     if (!reg || !('pushManager' in reg)) return
     supported.value = true
     permission.value = Notification.permission
+
     const existing = await reg.pushManager.getSubscription()
     subscribed.value = Boolean(existing)
+    if (!existing || !auth.user.value) return
+
+    const endpoint = existing.toJSON().endpoint
+    if (!endpoint) return
+
+    const { data } = await supabase.from('push_subscriptions')
+      .select('id')
+      .eq('user_id', auth.user.value.id)
+      .eq('endpoint', endpoint)
+      .maybeSingle()
+
+    if (!data) await saveSubscription(existing)
   }
 
   async function enable() {
@@ -65,24 +103,9 @@ export function usePush() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey) as BufferSource
       })
-      const json = subscription.toJSON()
-      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-        toast.error('Abonnement push incomplet.')
-        return false
-      }
-
-      const { error } = await supabase.from('push_subscriptions').upsert({
-        user_id: auth.user.value.id,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        reminder_minutes: reminders.pushMinutes.value,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        device: navigator.userAgent.slice(0, 200)
-      }, { onConflict: 'user_id,endpoint' })
-
-      if (error) {
-        toast.error(error.message)
+      const saved = await saveSubscription(subscription)
+      if (!saved.ok) {
+        toast.error(saved.message)
         return false
       }
 
@@ -125,6 +148,20 @@ export function usePush() {
   async function test() {
     loading.value = true
     try {
+      const reg = await registration()
+      const existing = reg ? await reg.pushManager.getSubscription() : null
+      if (!existing) {
+        toast.error('Abonnement push introuvable : cliquez sur Activer.')
+        return
+      }
+
+      const saved = await saveSubscription(existing)
+      if (!saved.ok) {
+        toast.error(saved.message)
+        return
+      }
+      subscribed.value = true
+
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) {
