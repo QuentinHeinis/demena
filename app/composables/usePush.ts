@@ -125,35 +125,27 @@ export function usePush() {
   async function test() {
     loading.value = true
     try {
-      const { data } = await supabase.auth.getSession()
-      const token = data.session?.access_token
-      if (!token) {
-        toast.error('Connectez-vous pour tester les notifications.')
-        return
-      }
-
-      const response = await fetch(`${config.supabaseUrl}/functions/v1/send-due-notifications`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ test: true })
+      const { data, error } = await supabase.functions.invoke<{ ok?: boolean, error?: string }>('send-due-notifications', {
+        body: { test: true }
       })
 
-      if (response.ok) {
+      if (!error && data?.ok) {
         toast.success('Notification de test envoyée.')
         return
       }
 
-      const reg = await registration()
-      if (reg) {
-        if (reg.active) reg.active.postMessage({ type: 'TEST_NOTIFICATION' })
-        else await reg.showNotification('Déména', { body: 'Les notifications sont activées.', icon: '/icon-192.png' })
+      let detail = data?.error
+        ?? (data?.ok === false ? 'Le service push a refusé l’envoi.' : error?.message ?? 'Réponse inattendue.')
+
+      const context = (error as { context?: Response } | null)?.context
+      if (context) {
+        const body = await context.json().catch(() => null) as { message?: string, error?: string } | null
+        detail = body?.message || body?.error || detail
       }
-      toast.info('Edge Function non disponible : notification locale affichée.')
-    } catch {
-      toast.error('Impossible d’envoyer la notification de test.')
+
+      toast.error(`Notification de test : ${detail}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Impossible d’envoyer la notification de test.')
     } finally {
       loading.value = false
     }
