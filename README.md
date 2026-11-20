@@ -45,6 +45,7 @@ pnpm dev
 ## PWA et notifications push
 
 - Le site est installable comme PWA : manifeste, icônes et service worker dans `public/`.
+- Après connexion sur mobile, une fenêtre propose l’installation ; on peut la refuser pour 7 jours. Sur iOS, elle affiche la procédure « Sur l’écran d’accueil » car Safari ne déclenche pas `beforeinstallprompt`.
 - La cloche de l’en-tête affiche déjà les événements des 7 prochains jours, sans configuration supplémentaire.
 - Vercel héberge seulement le front. La Edge Function et le cron vivent dans Supabase (plan gratuit suffisant).
 

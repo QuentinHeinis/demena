@@ -161,6 +161,11 @@ export interface Toast {
   type: 'success' | 'error' | 'info'
 }
 
+export interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export type TaskInput = Partial<Task> & Pick<Task, 'title'>
 export type TransactionInput = Partial<Transaction> & Pick<Transaction, 'label' | 'amount' | 'type'>
 export type BudgetInput = Partial<Budget> & Pick<Budget, 'category' | 'amount'>

@@ -16,5 +16,6 @@ const configured = Boolean(config.supabaseUrl && config.supabasePublishableKey)
         <slot />
       </main>
     </div>
+    <PwaInstallPrompt />
   </div>
 </template>

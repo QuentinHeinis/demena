@@ -1,7 +1,24 @@
-export default defineNuxtPlugin(() => {
-  if (!import.meta.client || !('serviceWorker' in navigator)) return
+import type { BeforeInstallPromptEvent } from '~/types'
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+export default defineNuxtPlugin(() => {
+  const prompt = useState<BeforeInstallPromptEvent | null>('pwa-install-prompt', () => null)
+  const installed = useState<boolean>('pwa-installed', () => false)
+
+  if (!import.meta.client) return
+
+  if ('serviceWorker' in navigator) {
+    const register = () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+    if (document.readyState === 'complete') register()
+    else window.addEventListener('load', register, { once: true })
+  }
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault()
+    prompt.value = event as BeforeInstallPromptEvent
+  })
+
+  window.addEventListener('appinstalled', () => {
+    prompt.value = null
+    installed.value = true
   })
 })
