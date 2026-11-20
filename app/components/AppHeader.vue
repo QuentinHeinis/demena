@@ -60,41 +60,43 @@ onMounted(() => {
         >{{ upcoming.length }}</span>
       </button>
 
-      <div v-if="notificationsOpen" class="fixed inset-0 z-40" @click="notificationsOpen = false" />
+      <Teleport to="body">
+        <div v-if="notificationsOpen" class="fixed inset-0 z-40" @click="notificationsOpen = false" />
 
-      <div v-if="notificationsOpen" class="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
-        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-          <p class="text-sm font-bold text-slate-900 dark:text-white">À venir</p>
-          <span class="text-xs text-slate-400">{{ upcoming.length }} rappel(s)</span>
-        </div>
+        <div v-if="notificationsOpen" class="fixed inset-x-4 top-14 z-50 max-h-[calc(100vh-4rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 sm:inset-x-auto sm:right-6 sm:w-[min(22rem,calc(100vw-3rem))]">
+          <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <p class="text-sm font-bold text-slate-900 dark:text-white">À venir</p>
+            <span class="text-xs text-slate-400">{{ upcoming.length }} rappel(s)</span>
+          </div>
 
-        <div v-if="!upcoming.length" class="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-          Rien de prévu dans les 7 prochains jours.
-        </div>
+          <div v-if="!upcoming.length" class="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            Rien de prévu dans les 7 prochains jours.
+          </div>
 
-        <div v-else class="max-h-80 divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
-          <NuxtLink
-            v-for="item in upcoming"
-            :key="item.event.id"
-            :to="item.event.to"
-            class="block px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
-            @click="notificationsOpen = false"
-          >
-            <div class="flex items-start gap-3">
-              <span class="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" />
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ item.event.title }}</p>
-                <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.event.subtitle }}</p>
+          <div v-else class="max-h-80 divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
+            <NuxtLink
+              v-for="item in upcoming"
+              :key="item.event.id"
+              :to="item.event.to"
+              class="block px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+              @click="notificationsOpen = false"
+            >
+              <div class="flex items-start gap-3">
+                <span class="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ item.event.title }}</p>
+                  <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.event.subtitle }}</p>
+                </div>
+                <span class="shrink-0 text-[11px] font-semibold text-brand-600 dark:text-brand-400">{{ dayLabel(item.days) }}</span>
               </div>
-              <span class="shrink-0 text-[11px] font-semibold text-brand-600 dark:text-brand-400">{{ dayLabel(item.days) }}</span>
-            </div>
+            </NuxtLink>
+          </div>
+
+          <NuxtLink to="/calendrier" class="flex items-center justify-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-semibold text-brand-600 hover:bg-slate-50 dark:border-slate-800 dark:text-brand-400 dark:hover:bg-slate-800/60" @click="notificationsOpen = false">
+            <CalendarDays class="size-3.5" />Voir le calendrier
           </NuxtLink>
         </div>
-
-        <NuxtLink to="/calendrier" class="flex items-center justify-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-semibold text-brand-600 hover:bg-slate-50 dark:border-slate-800 dark:text-brand-400 dark:hover:bg-slate-800/60" @click="notificationsOpen = false">
-          <CalendarDays class="size-3.5" />Voir le calendrier
-        </NuxtLink>
-      </div>
+      </Teleport>
     </div>
 
     <button
