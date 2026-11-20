@@ -12,7 +12,7 @@ import UiConfirmModal from '~/components/ui/ConfirmModal.vue'
 import TaskCard from '~/components/TaskCard.vue'
 import TaskFormModal from '~/components/TaskFormModal.vue'
 import { cn } from '~/utils/cn'
-import { TASK_PRIORITIES, TASK_SORT_OPTIONS, TASK_SORT_ORDER_OPTIONS } from '~/utils/constants'
+import { TASK_CATEGORIES, TASK_PRIORITIES, TASK_SORT_OPTIONS, TASK_SORT_ORDER_OPTIONS } from '~/utils/constants'
 import { useTasks } from '~/composables/useTasks'
 import { useWorkspace } from '~/composables/useWorkspace'
 
@@ -36,6 +36,8 @@ function compareTasks(a: Task, b: Task): number {
   if (sortBy.value === 'due') result = (a.due_date ?? '').localeCompare(b.due_date ?? '')
   else if (sortBy.value === 'priority') {
     result = TASK_PRIORITIES.findIndex((item) => item.value === a.priority) - TASK_PRIORITIES.findIndex((item) => item.value === b.priority)
+  } else if (sortBy.value === 'category') {
+    result = TASK_CATEGORIES.findIndex((item) => item.value === a.category) - TASK_CATEGORIES.findIndex((item) => item.value === b.category)
   } else if (sortBy.value === 'status') result = Number(a.done) - Number(b.done)
   else if (sortBy.value === 'title') result = a.title.localeCompare(b.title, 'fr')
   else if (sortBy.value === 'created') result = a.created_at.localeCompare(b.created_at)

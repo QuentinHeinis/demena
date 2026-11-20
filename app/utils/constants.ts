@@ -16,6 +16,7 @@ export const TASK_PRIORITIES = [
 export const TASK_SORT_OPTIONS = [
   { value: 'due', label: 'Échéance' },
   { value: 'priority', label: 'Priorité' },
+  { value: 'category', label: 'Catégorie' },
   { value: 'status', label: 'Statut' },
   { value: 'title', label: 'Titre' },
   { value: 'created', label: 'Ajout récent' }
