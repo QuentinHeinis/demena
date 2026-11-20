@@ -21,6 +21,7 @@ const workspace = useWorkspace()
 
 const filter = ref<'all' | 'pending' | 'done'>('all')
 const search = ref('')
+const selectedCategories = ref<string[]>([])
 const sortBy = ref('due')
 const sortOrder = ref('asc')
 const modalOpen = ref(false)
@@ -29,6 +30,12 @@ const toDelete = ref<Task | null>(null)
 
 onMounted(() => tasks.fetch())
 
+function toggleCategory(value: string) {
+  selectedCategories.value = selectedCategories.value.includes(value)
+    ? selectedCategories.value.filter((item) => item !== value)
+    : [...selectedCategories.value, value]
+}
+
 function compareTasks(a: Task, b: Task): number {
   if (Boolean(a.due_date) !== Boolean(b.due_date)) return a.due_date ? -1 : 1
 
@@ -36,8 +43,6 @@ function compareTasks(a: Task, b: Task): number {
   if (sortBy.value === 'due') result = (a.due_date ?? '').localeCompare(b.due_date ?? '')
   else if (sortBy.value === 'priority') {
     result = TASK_PRIORITIES.findIndex((item) => item.value === a.priority) - TASK_PRIORITIES.findIndex((item) => item.value === b.priority)
-  } else if (sortBy.value === 'category') {
-    result = TASK_CATEGORIES.findIndex((item) => item.value === a.category) - TASK_CATEGORIES.findIndex((item) => item.value === b.category)
   } else if (sortBy.value === 'status') result = Number(a.done) - Number(b.done)
   else if (sortBy.value === 'title') result = a.title.localeCompare(b.title, 'fr')
   else if (sortBy.value === 'created') result = a.created_at.localeCompare(b.created_at)
@@ -51,6 +56,7 @@ const visible = computed(() => {
     .filter((task) => {
       if (filter.value === 'pending' && task.done) return false
       if (filter.value === 'done' && !task.done) return false
+      if (selectedCategories.value.length && !selectedCategories.value.includes(task.category)) return false
       return !term || task.title.toLowerCase().includes(term) || task.description.toLowerCase().includes(term)
     })
     .sort(compareTasks)
@@ -111,6 +117,36 @@ async function confirmDelete() {
           </button>
         </div>
       </div>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Catégories</span>
+      <button
+        type="button"
+        :class="cn(
+          'rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset transition',
+          selectedCategories.length ? 'bg-white text-slate-500 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-700' : 'bg-brand-600 text-white ring-brand-600'
+        )"
+        @click="selectedCategories = []"
+      >
+        Toutes
+      </button>
+      <button
+        v-for="category in TASK_CATEGORIES"
+        :key="category.value"
+        type="button"
+        :aria-pressed="selectedCategories.includes(category.value)"
+        :class="cn(
+          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset transition',
+          selectedCategories.includes(category.value)
+            ? category.class
+            : 'bg-white text-slate-500 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-700 dark:hover:bg-slate-800'
+        )"
+        @click="toggleCategory(category.value)"
+      >
+        <span class="size-2 rounded-full" :style="{ backgroundColor: category.hex }" />
+        {{ category.label }}
+      </button>
     </div>
 
     <div class="mb-4 flex items-center justify-between text-sm">
